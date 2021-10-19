@@ -1,8 +1,9 @@
-import * as dayjs from "dayjs";
-import * as fs from "fs";
-import * as handlebars from "handlebars";
-import * as path from "path";
+import dayjs from "dayjs";
+import fs from "fs";
+import handlebars from "handlebars";
+import path from "path";
 import { document } from "../utils/dynamodbClient";
+import chromium from "chrome-aws-lambda";
 
 
 
@@ -21,7 +22,7 @@ interface ITemplate {
     medal: string;
 }
 
-const compile = async function (data: any) {
+const compile = async function (data: ITemplate) {
     const filepath = path.join(process.cwd(), "src", "templates", "certificate.hbs");
 
     const html = fs.readFileSync(filepath, "utf-8");
@@ -53,6 +54,27 @@ export const handle = async (event) => {
     }
 
     const content = await compile(data);
+
+    const browser = await chromium.puppeteer.launch({
+        headless: true,
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath
+    });
+
+    const page = await browser.newPage();
+
+    await page.setContent(content);
+
+    const pdf = await page.pdf({
+        format: "a4",
+        landscape: true,
+        path: process.env.IS_OFFLINE ? "certificate.pdf" : null,
+        printBackground: true,
+        preferCSSPageSize: true,
+    });
+
+    await browser.close();
 
     return {
         statusCode: 201,
