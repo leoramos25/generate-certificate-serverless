@@ -3,7 +3,8 @@ import * as dayjs from "dayjs";
 import * as fs from "fs";
 import * as handlebars from "handlebars";
 import * as path from "path";
-import { document } from "../utils/dynamodbClient"
+import { document } from "../utils/dynamodbClient";
+import { S3 } from "aws-sdk"
 
 interface ICreateCertificate {
     id: string;
@@ -74,10 +75,22 @@ export const handle = async (event) => {
 
     await browser.close();
 
+    const s3 = new S3();
+
+    await s3.putObject({
+        Bucket: "certificate-ignitenodejs",
+        Key: `${id}.pdf`,
+        ACL: "public-read",
+        Body: pdf,
+        ContentType: "application/pdf",
+    })
+    .promise();
+
     return {
         statusCode: 201,
         body: JSON.stringify({
-            message: "Certificate created"
+            message: "Certificate created",
+            Url: `https://certificate-ignitenodejs.s3.sa-east-1.amazonaws.com/${id}.pdf`
         }),
         headers: {
             "Content-Type": "application/json",
