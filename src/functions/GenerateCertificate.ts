@@ -1,18 +1,15 @@
-import dayjs from "dayjs";
-import fs from "fs";
-import handlebars from "handlebars";
-import path from "path";
-import { document } from "../utils/dynamodbClient";
-import chromium from "chrome-aws-lambda";
-
-
+import * as Chromium from "chrome-aws-lambda";
+import * as dayjs from "dayjs";
+import * as fs from "fs";
+import * as handlebars from "handlebars";
+import * as path from "path";
+import { document } from "../utils/dynamodbClient"
 
 interface ICreateCertificate {
     id: string;
     name: string;
     grade: string;
 }
-
 
 interface ITemplate {
     id: string;
@@ -40,7 +37,8 @@ export const handle = async (event) => {
             name,
             grade
         }
-    }).promise();
+    })
+    .promise();
 
     const medalPath = path.join(process.cwd(), "src", "templates", "selo.png");
     const medal = fs.readFileSync(medalPath, "base64");
@@ -55,11 +53,11 @@ export const handle = async (event) => {
 
     const content = await compile(data);
 
-    const browser = await chromium.puppeteer.launch({
+    const browser = await Chromium.puppeteer.launch({
         headless: true,
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath
+        args: Chromium.args,
+        defaultViewport: Chromium.defaultViewport,
+        executablePath: await Chromium.executablePath
     });
 
     const page = await browser.newPage();
@@ -84,5 +82,5 @@ export const handle = async (event) => {
         headers: {
             "Content-Type": "application/json",
         },
-    }
+    };
 };
