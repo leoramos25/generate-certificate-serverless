@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as handlebars from "handlebars";
 import * as path from "path";
 import { document } from "../utils/dynamodbClient";
-import { S3 } from "aws-sdk"
+import { S3 } from "aws-sdk";
 
 interface ICreateCertificate {
     id: string;
@@ -31,15 +31,26 @@ const compile = async function (data: ITemplate) {
 export const handle = async (event) => {
     const { id, name, grade } = JSON.parse(event.body) as ICreateCertificate;
 
-    await document.put({
+    const response = await document.query({
         TableName: "users_certificates",
-        Item: {
-            id,
-            name,
-            grade
+        KeyConditionExpression: "id = :id",
+        ExpressionAttributeValues: {
+            ":id": id,
         }
-    })
-    .promise();
+    }).promise();
+
+    const userAlreadyExists = response.Items[0];
+
+    if (!userAlreadyExists) {
+        await document.put({
+            TableName: "users_certificates",
+            Item: {
+                id,
+                name,
+                grade
+            }
+        }).promise();
+    }
 
     const medalPath = path.join(process.cwd(), "src", "templates", "selo.png");
     const medal = fs.readFileSync(medalPath, "base64");
@@ -84,7 +95,7 @@ export const handle = async (event) => {
         Body: pdf,
         ContentType: "application/pdf",
     })
-    .promise();
+        .promise();
 
     return {
         statusCode: 201,

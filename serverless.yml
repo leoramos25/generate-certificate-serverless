@@ -18,6 +18,7 @@ custom:
       port: 8000
       inMemory: true
       migrate: true
+  bucket: certificate-ignitenodejs
 
 provider:
   name: aws
@@ -26,11 +27,18 @@ provider:
 
 functions:
   GenerateCertificate:
-    handler: src/functions/GenerateCertificate.handle
+    handler: src/functions/generateCertificate.handle
     events:
       - http:
           path: /generateCertificate
           method: POST
+          cors: true
+  VerifyCertificate:
+    handler: src/functions/verifyCertificate.handle
+    events:
+      - http:
+          path: /verifyCertificate/{id}
+          method: GET
           cors: true
 
 resources:
