@@ -1,6 +1,7 @@
 const path = require('path');
 const slsw = require('serverless-webpack');
 const nodeExternals = require('webpack-node-externals');
+const copyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     context: __dirname,
@@ -50,4 +51,14 @@ module.exports = {
             },
         ],
     },
+    plugins: [
+        new copyWebpackPlugin({
+            patterns: [
+                {
+                    from: "./src/templates",
+                    to: path.join(__dirname, ".webpack/service/src/templates"),
+                },
+            ],
+        }),
+    ],
 };
